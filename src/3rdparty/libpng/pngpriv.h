@@ -1,4 +1,3 @@
-
 /* pngpriv.h - private declarations for use inside libpng
  *
  * Last changed in libpng 1.6.17 [March 26, 2015]
@@ -165,7 +164,7 @@
              */
 #        elif defined(__GNUC__)
             /* GCC 4.5.4 NEON support is known to be broken.  4.6.3 is known to
-             * work, so if this *is* GCC, or G++, look for a version >4.5
+             * work, so if this *IS* GCC, or G++, look for a version >4.5
              */
 #           if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 6)
 #              define PNG_ARM_NEON_IMPLEMENTATION 2
@@ -408,8 +407,8 @@
     */
 #  include <float.h>
 
-#  if (defined(__MWERKS__) && defined(macintosh)) || defined(applec) || \
-    defined(THINK_C) || defined(__SC__) || defined(TARGET_OS_MAC)
+#  if (defined(__MWERKS__) || defined(applec) || defined(THINK_C) || \
+      defined(__SC__)) && (defined(macintosh) || defined(TARGET_OS_MAC))
      /* We need to check that <math.h> hasn't already been included earlier
       * as it seems it doesn't agree with <fp.h>, yet we should really use
       * <fp.h> if possible.

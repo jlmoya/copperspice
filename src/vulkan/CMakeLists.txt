@@ -91,10 +91,17 @@ if(CMAKE_SYSTEM_NAME MATCHES "(Linux|OpenBSD|FreeBSD|NetBSD|DragonFly)")
       ${XCB_LIB}
   )
 
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  target_compile_definitions(CsVulkan
+     PUBLIC
+        -DVK_USE_PLATFORM_MACOS_MVK
+        -DVK_USE_PLATFORM_METAL_EXT
+  )
+
 else()
   target_compile_definitions(CsVulkan
      PUBLIC
-     -DVK_USE_PLATFORM_WIN32_KHR
+        -DVK_USE_PLATFORM_WIN32_KHR
   )
 
 endif()

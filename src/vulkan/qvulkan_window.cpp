@@ -29,8 +29,13 @@
 #include <qvulkan_device_functions.h>
 #include <qvulkan_functions.h>
 
-#if defined(Q_OS_UNIX)
-#include <xcb/xcb.h>
+#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
+#  include <xcb/xcb.h>
+#endif
+#if defined(Q_OS_DARWIN)
+#  include <QuartzCore/CAMetalLayer.h>
+// Avoid using Objective-C syntax in this C++ translation unit; we only
+// work with the opaque native handle as a CAMetalLayer* when available.
 #endif
 
 namespace {
@@ -367,7 +372,45 @@ bool QVulkanWindow::createSurface() const
 
    m_surface = vulkanInstance()->apiInstance().createWin32SurfaceKHRUnique(createInfo, nullptr, vulkanInstance()->dispatchLoader());
 
-#elif defined(Q_OS_UNIX)
+#elif defined(Q_OS_DARWIN)
+   // macOS platform specific code
+
+   // The platform plugin is expected to provide a CAMetalLayer* as the
+   // native window handle when Vulkan/Metal is in use. We avoid any
+   // Objective-C interaction here and simply treat the handle as an
+   // opaque CAMetalLayer pointer.
+
+   auto nativeWindow = handle()->nativeHandle();
+   auto layerPtr     = reinterpret_cast<CAMetalLayer *>(nativeWindow);
+
+   if (! layerPtr) {
+      qWarning("QVulkanWindow::createSurface() Unable to acquire a CAMetalLayer for the window");
+      return false;
+   }
+
+   VkMetalSurfaceCreateInfoEXT createInfo{};
+   createInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+   createInfo.pLayer = layerPtr;
+
+   auto createMetalSurface = reinterpret_cast<PFN_vkCreateMetalSurfaceEXT>(
+         vulkanInstance()->getInstanceProcAddr("vkCreateMetalSurfaceEXT"));
+
+   if (! createMetalSurface) {
+      qWarning("QVulkanWindow::createSurface() vkCreateMetalSurfaceEXT not available");
+      return false;
+   }
+
+   VkSurfaceKHR surface = VK_NULL_HANDLE;
+   VkResult result = createMetalSurface(vulkanInstance()->vkInstance(), &createInfo, nullptr, &surface);
+
+   if (result != VK_SUCCESS) {
+      qWarning("QVulkanWindow::createSurface() vkCreateMetalSurfaceEXT failed (%d)", result);
+      return false;
+   }
+
+   m_surface.reset(surface);
+
+#elif defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
    // unix platform specific code
 
    vk::XcbSurfaceCreateInfoKHR createInfo;

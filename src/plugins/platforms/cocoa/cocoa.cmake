@@ -118,7 +118,6 @@ if(BUILD_PLATFORMS_COCOA_PLUGIN)
       -framework ApplicationServices
       -framework AppKit
       -framework OpenGL
-      -framework AGL
    )
 
    function_variable_fixup("${EXTRA_PLATFORMS_COCOA_CXXFLAGS}" EXTRA_PLATFORMS_COCOA_CXXFLAGS)
